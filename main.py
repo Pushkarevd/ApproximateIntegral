@@ -4,7 +4,6 @@ from tkinter import ttk
 import numpy as np
 from numpy import cos,sin,tan,arcsin,arccos,arctan,log,e
 
-root = tk.Tk()
 
 class Block:
     def __init__(self, root):
@@ -23,13 +22,13 @@ class Block:
         self.start = tk.Button(root, text="Start", command=self.approximate, width="10")
         self.progress_bar = ttk.Progressbar(root, orient=tk.HORIZONTAL,
                                             length=300, mode='determinate')
-        #self.plot = tk.Canvas(width=500, height=300, bg="white")
+        # self.plot = tk.Canvas(width=500, height=300, bg="white")
 
         self.f_function.pack()
 
         self.result.pack(side=tk.BOTTOM, pady=10)
-        #self.plot.focus_set()
-        #self.plot.pack(side=tk.BOTTOM)
+        # self.plot.focus_set()
+        # self.plot.pack(side=tk.BOTTOM)
         self.progress_bar.pack(side=tk.BOTTOM, pady=10)
         self.start.pack(side=tk.BOTTOM)
         self.f_border.pack(side=tk.RIGHT)
@@ -85,5 +84,8 @@ class Block:
         self.result["text"] = str(round(((dots_positive - dots_negative) / dots) * area, 6))
 
 
-first_block = Block(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Approximate Integral")
+    first_block = Block(root)
+    root.mainloop()
