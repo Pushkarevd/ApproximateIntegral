@@ -2,7 +2,8 @@ import tkinter as tk
 import random
 from tkinter import ttk
 import numpy as np
-from numpy import cos,sin,tan,arcsin,arccos,arctan,log,e
+from numpy import cos, sin, tan, arcsin, arccos, arctan, log, e
+from multiprocessing import Process, Value, Lock
 
 
 class Block:
@@ -25,7 +26,6 @@ class Block:
         # self.plot = tk.Canvas(width=500, height=300, bg="white")
 
         self.f_function.pack()
-
         self.result.pack(side=tk.BOTTOM, pady=10)
         # self.plot.focus_set()
         # self.plot.pack(side=tk.BOTTOM)
@@ -44,9 +44,10 @@ class Block:
     def approximate(self):
         # Change double ^ to **
         function = self.function.get().replace("^", "**")
+        self.progress_bar["value"] = 0
         # Declare variable
-        dots_negative = 0
-        dots_positive = 0
+        dots_positive = Value('i', 0)
+        dots_negative = Value('i', 0)
         maximum = -10 ** 11
         minimum = 10 ** 11
         # Get variable from entries
@@ -68,20 +69,32 @@ class Block:
 
         area = (maximum - minimum) * (b - a)
 
-        for progress in range(1, dots):
-            # Progress bar
-            self.progress_bar["value"] = dots * 100 / progress
+        def count_dots(quantity, lock):
+            for _ in range(quantity):
+                x = random.uniform(a, b)
+                y = random.uniform(minimum, maximum)
 
-            x = random.uniform(a, b)
-            y = random.uniform(minimum, maximum)
+                f_y = eval(function)
+                if 0 < y <= f_y:
+                    lock.acquire()
+                    dots_positive.value += 1
+                    lock.release()
+                elif f_y <= y < 0:
+                    lock.acquire()
+                    dots_negative.value += 1
+                    lock.release()
 
-            f_y = eval(function)
-            if 0 < y <= f_y:
-                dots_positive += 1
-            elif f_y <= y < 0:
-                dots_negative += 1
+        procs = []
+        lock = Lock()
+        quantity = dots // 10
+        for _ in range(10):
+            proc = Process(target=count_dots, args=(quantity, lock))
+            procs.append(proc)
+            proc.start()
 
-        self.result["text"] = str(round(((dots_positive - dots_negative) / dots) * area, 6))
+        for index, proc in enumerate(procs):
+            proc.join()
+        self.result["text"] = str(round(((dots_positive.value - dots_negative.value) / dots) * area, 6))
 
 
 if __name__ == "__main__":
