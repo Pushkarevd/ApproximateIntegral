@@ -44,7 +44,6 @@ class Block:
     def approximate(self):
         # Change double ^ to **
         function = self.function.get().replace("^", "**")
-        self.progress_bar["value"] = 0
         # Declare variable
         dots_positive = Value('i', 0)
         dots_negative = Value('i', 0)
@@ -70,23 +69,30 @@ class Block:
         area = (maximum - minimum) * (b - a)
 
         def count_dots(quantity, lock):
+            thread_negative = 0
+            thread_positive = 0
             for _ in range(quantity):
+
                 x = random.uniform(a, b)
                 y = random.uniform(minimum, maximum)
 
                 f_y = eval(function)
                 if 0 < y <= f_y:
-                    lock.acquire()
-                    dots_positive.value += 1
-                    lock.release()
+                    thread_positive += 1
                 elif f_y <= y < 0:
-                    lock.acquire()
-                    dots_negative.value += 1
-                    lock.release()
+                    thread_negative += 1
+
+            lock.acquire()
+            dots_positive.value += thread_positive
+            lock.release()
+            lock.acquire()
+            dots_negative.value += thread_negative
+            lock.release()
 
         procs = []
         lock = Lock()
         quantity = dots // 10
+        dots = quantity * 10
         for _ in range(10):
             proc = Process(target=count_dots, args=(quantity, lock))
             procs.append(proc)
